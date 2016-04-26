@@ -40,7 +40,7 @@
   (go
    (<! keys-chan)
    (pre-start!)
-   (<! (timeout 2000))
+   (<! (timeout 400))
    (start!)
    (set-letter-wanted! (rand-nth alphabet))
    (loop [w ""]
@@ -77,44 +77,63 @@
 ;; -------------------------
 ;; Views
 
-(defn timer-bar [timestamp]
-  (let [speed 20
-        timestamp (atom timestamp)
-        time-left (atom (get-interval))]
-    (js/setInterval #(swap! time-left (fn [t] (- t speed))) speed)
-    (fn [stamp status]
-      (when (> stamp @timestamp)
-        (reset! time-left (get-interval))
-        (reset! timestamp stamp))
-      (when (= :ended status) (reset! time-left 0))
-      [:div {:style {:height "4px"
-                     :width (-> @time-left (* 100) (/ (get-interval)) (str "%"))
-                     :background-color "#FF304F"}}])))
-
 (defn toggle-mode []
   [:input {:type "checkbox"
            :default-checked (:offensive @app)
            :on-change #(swap! app assoc :offensive (-> % .-target .-value))} "Offensive mode (you've been warned!)"])
 
+(defn twitter-button []
+  (let [base "https://platform.twitter.com/widgets/tweet_button.html?"
+        size "size=l"
+        domain "&url=typeletter.herokuapp.com"
+        text "&text=blablabla"
+        src (reduce str [base size domain text])]
+    (fn []
+      [:iframe {:src src
+                :scrolling "no"
+                :width 80
+                :height 30
+                :style {:border 0}}])))
+
+(defn timer-bar [timestamp]
+  (let [speed 15
+        timestamp (atom timestamp)
+        time-left (atom (get-interval))]
+    (js/setInterval #(swap! time-left (fn [t] (- t speed))) speed)
+    (fn [stamp status interval]
+      (when (> stamp @timestamp)
+        (reset! time-left interval)
+        (reset! timestamp stamp))
+      (when (= :ended status) (reset! time-left 0))
+      (let [tx (-> @time-left (* 100) (/ interval) (str "%"))]
+        [:div.loader-bck {:style {:position "absolute"
+                                  :height "100%"
+                                  :width "100%"
+                                  :transform (str "translate3d(" tx ",0,0)")}}]))))
+
 (defn home-page []
   [:div
-   [:div {:style {:background-color "#118DF0" :padding "80px"}}
-    ; [toggle-mode]
-    [:h2 (case (:status @app)
-           :starting "Focus on the letter!"
-           :started "type type type"
-           :ended "Game Over... Press any key to try again!"
-           "Press any key to start")]]
-   [:div
-    (when (#{:started :ended} (:status @app))
-      [:div
-       [:div {:style {:background-color "#0E2F56" :padding "40px"}}
-        [:h2 {:style {:text-shadow "-2px 0px 1px #ECECDA"
-                      :color (->> "0123456789abcdef" shuffle (take 6) (apply str "#"))}}
-         (:letter-wanted @app)]
-        [timer-bar (:timestamp @app) (:status @app)]]
-       [:div {:style {:background-color "#FF304F" :padding "20px"}}
-        [:h3 "Score: " (:score @app)]]])]])
+   (when (#{:started :ended} (:status @app))
+     [timer-bar
+      (:timestamp @app)
+      (:status @app)
+      (get-interval)])
+   [:div.container
+    [:span.logo.left "TYPE LETTER"]
+    [:span.instructions-and-link.left
+     "type the letters as they appear"]
+    [:span.press-start.right "SCORE: " (:score @app)]]
+   [:div.giant-letter (:letter-wanted @app)]
+   [:div.press-start
+    (case (:status @app)
+      nil "PRESS ANY KEY TO START"
+      :ended "GAME OVER... PRESS ANY KEY TO TRY AGAIN"
+      "")]
+   [:div.container.footer
+    [:span.social-btn.left [twitter-button]]
+    [:span.instructions-and-link.right
+     [:span {:style {:color "#fff"}} "Made by "]
+     [:a {:href "https://twitter.com/teawaterwire"} "@teawaterwire"]]]])
 
 ;; -------------------------
 ;; Initialize app
