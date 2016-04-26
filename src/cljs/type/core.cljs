@@ -11,7 +11,7 @@
 ;; -------------------------
 ;; App state
 
-(defonce app (atom {:letter-wanted nil :status nil :score 0}))
+(defonce app (atom {:status nil :score 0}))
 
 (defn pre-start! []
   (swap! app assoc :status :starting)
@@ -30,7 +30,7 @@
 ;; -------------------------
 ;; Create letter generator
 
-(defonce alphabet (seq "ABCDEFGHIJKLMNOPQRSTUVXYZ"))
+(defonce alphabet (seq "ABCDEFGHIJKLMNOPQRSTUVWXYZ"))
 ; http://onlineslangdictionary.com/lists/most-vulgar-words/
 (defonce words ["CUNT" "SKULLFUCK" "BLUMPKIN" "ASSMUCUS" "MOTHERFUCKER"
                 "CUMDUMP" "FUCKMEAT" "FUCK" "GFY" "FUCKTOY" "SPERG"
@@ -85,8 +85,8 @@
 (defn twitter-button []
   (let [base "https://platform.twitter.com/widgets/tweet_button.html?"
         size "size=l"
-        domain "&url=typeletter.herokuapp.com"
-        text "&text=blablabla"
+        domain "&url=http://typeletter.co/"
+        text "&text=Learn to type fast by trying to reach for the highest possible score of 💯+💯! "
         src (reduce str [base size domain text])]
     (fn []
       [:iframe {:src src
@@ -123,7 +123,7 @@
     [:span.instructions-and-link.left
      "type the letters as they appear"]
     [:span.press-start.right "SCORE: " (:score @app)]]
-   [:div.giant-letter (:letter-wanted @app)]
+   [:div.giant-letter (get @app :letter-wanted "?")]
    [:div.press-start
     (case (:status @app)
       nil "PRESS ANY KEY TO START"
@@ -133,7 +133,8 @@
     [:span.social-btn.left [twitter-button]]
     [:span.instructions-and-link.right
      [:span {:style {:color "#fff"}} "Made by "]
-     [:a {:href "https://twitter.com/teawaterwire"} "@teawaterwire"]]]])
+     [:a {:target "_blank"
+          :href "https://twitter.com/teawaterwire"} "@teawaterwire"]]]])
 
 ;; -------------------------
 ;; Initialize app
