@@ -11,7 +11,7 @@
 ;; -------------------------
 ;; App state
 
-(defonce app (atom {:status :ended :score 0}))
+(defonce app (atom {:status nil :score 0}))
 
 (defonce first-interval 2000)
 (defonce speed-inc -10)
@@ -116,10 +116,11 @@
 
 (defn home-page []
   [:div
-   [timer-bar
-    (:timestamp @app)
-    (:status @app)
-    (get-interval)]
+   (when (:status @app)
+     [timer-bar
+      (:timestamp @app)
+      (:status @app)
+      (get-interval)])
    [:div.container
     [:span.logo.left "TYPE LETTER"]
     [:span.instructions-and-link.left
