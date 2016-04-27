@@ -134,10 +134,15 @@
        "")]
     [:div.footer
      [:span.social-btn.left [twitter-button]]
-     [:span.instructions-and-link.right
+     [:span.instructions-and-link.right {:style {:font-size "14px"
+                                                 :position "relative"
+                                                 :top "6px"}}
       [:span {:style {:color "#fff"}} "Made by "]
       [:a {:target "_blank"
-           :href "https://twitter.com/teawaterwire"} "@teawaterwire"]]]]
+           :href "https://twitter.com/teawaterwire"} "@teawaterwire"]
+      [:span {:style {:color "#fff"}} " & Designed by "]
+      [:a {:target "_blank"
+           :href "https://twitter.com/guillaumechabot"} "@guillaumechabot"]]]]
    ])
 
 ;; -------------------------
