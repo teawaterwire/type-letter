@@ -5,6 +5,7 @@ body {
   margin: 0 auto;
   -webkit-font-smoothing: antialiased;
   font-size: 18px;
+  overflow-x: hidden;
 }
 
 .loader-bck {
@@ -44,8 +45,14 @@ body {
   font-family: cousine;
   color: #ffffff;
   min-height: 460px;
-  background-blend-mode: overlay;
+  margin-bottom: -20px;
+  margin-top: 30px;
+  mix-blend-mode: overlay;
   animation: glow 0.5s infinite alternate;
+}
+
+.giant-letter.ending {
+  animation: buzz 0.5s;
 }
 
 .press-start {
@@ -73,3 +80,21 @@ body {
         text-shadow: 0 0 10px #fff;
     }
 }
+
+@keyframes buzz {
+		0% {
+			transform: rotate(0);
+		}
+
+		10%, 30%, 50%, 70%, 90% {
+			transform: rotate(6deg);
+		}
+
+		20%, 40%, 60%, 80% {
+			transform: rotate(-6deg);
+		}
+
+		100% {
+			transform: rotate(0);
+		}
+	}
