@@ -6,7 +6,7 @@
             [config.core :refer [env]]))
 
 (def mount-target
-  [:div#app
+  [:div#app.fheight
       [:h3.press-start "Wait for it!"]])
 
 (def loading-page

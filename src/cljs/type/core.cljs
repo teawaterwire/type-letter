@@ -89,7 +89,7 @@
   (let [base "https://platform.twitter.com/widgets/tweet_button.html?"
         size "size=l"
         domain "&url=http://typeletter.co/"
-        text "&text=Learn to type fast by trying to reach for the highest possible score of 💯+💯! "
+        text "&text=Learn to type fast with Type Letter 💯➕💯"
         src (reduce str [base size domain text])]
     (fn []
       [:iframe {:src src
@@ -115,7 +115,7 @@
                                   :transform (str "translateX(" tx ")")}}]))))
 
 (defn home-page []
-  [:div
+  [:div.fheight
    (when (:status @app)
      [timer-bar
       (:timestamp @app)
@@ -125,19 +125,20 @@
     [:span.logo.left "TYPE LETTER"]
     [:span.instructions-and-link.left
      "type the letters as they appear"]
-    [:span.press-start.right "SCORE: " (:score @app)]]
-   [:div.giant-letter {:class-name (:status @app)} (get @app :letter-wanted "?")]
-   [:div.press-start
-    (case (:status @app)
-      nil "PRESS ANY KEY TO START"
-      :ended "GAME OVER... PRESS ANY KEY TO TRY AGAIN"
-      "")]
-   [:div.container.footer
-    [:span.social-btn.left [twitter-button]]
-    [:span.instructions-and-link.right
-     [:span {:style {:color "#fff"}} "Made by "]
-     [:a {:target "_blank"
-          :href "https://twitter.com/teawaterwire"} "@teawaterwire"]]]])
+    [:span.press-start.right "SCORE: " (:score @app)]
+    [:div.giant-letter {:class-name (:status @app)} (get @app :letter-wanted "?")]
+    [:div.press-start.blink
+     (case (:status @app)
+       nil "PRESS ANY KEY TO START"
+       :ended "GAME OVER... PRESS ANY KEY TO TRY AGAIN"
+       "")]
+    [:div.footer
+     [:span.social-btn.left [twitter-button]]
+     [:span.instructions-and-link.right
+      [:span {:style {:color "#fff"}} "Made by "]
+      [:a {:target "_blank"
+           :href "https://twitter.com/teawaterwire"} "@teawaterwire"]]]]
+   ])
 
 ;; -------------------------
 ;; Initialize app

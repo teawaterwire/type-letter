@@ -1,8 +1,13 @@
+html {
+  height: 100%;
+}
+
 body {
   background-color:#512DA8;
   color: #fff;
   text-align: center;
   margin: 0 auto;
+  height: 100%;
   -webkit-font-smoothing: antialiased;
   font-size: 18px;
   overflow-x: hidden;
@@ -11,27 +16,29 @@ body {
 .loader-bck {
   background-color: #D8D8D8;
   opacity: 0.45;
-  /*z-index: 10;*/
 }
 
 .container {
   max-width: 800px;
+  height: 100%;
   margin: auto;
-  padding: 40px;
+  padding: 40px 0;
+  position: relative;
+  box-sizing: border-box;
 }
 
 .footer {
-  margin-top: 40px;
-  padding-bottom: 10px;
-  position: relative;
+  position: absolute;
+  bottom: 45px;
   z-index: 10;
+  width: 100%;
 }
 
 .logo {
   font-size: 18px;
   font-family: cousine;
   color: #ffffff;
-  margin-right: 40px;
+  margin-right: 25px;
 }
 
 .instructions-and-link,
@@ -75,6 +82,14 @@ body {
   float: right;
 }
 
+.fheight {
+  height: 100%;
+}
+
+.blink {
+  animation: blink 1s infinite linear;
+}
+
 @keyframes glow {
     to {
         text-shadow: 0 0 10px #fff;
@@ -98,3 +113,13 @@ body {
 			transform: rotate(0);
 		}
 	}
+
+@keyframes blink {
+  0%, 49% {
+    color: #f8e71c;
+    opacity:1;
+  }
+  50%, 100% {
+    opacity:0;
+  }
+}
