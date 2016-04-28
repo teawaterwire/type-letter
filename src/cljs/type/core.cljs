@@ -14,7 +14,7 @@
 (defonce app (atom {:status nil :score 0}))
 
 (defonce first-interval 2000)
-(defonce speed-inc -10)
+(defonce speed-inc -20)
 (defn start! []
   (swap! app assoc :score 0)
   (swap! app assoc :status :started))
@@ -89,7 +89,7 @@
   (let [base "https://platform.twitter.com/widgets/tweet_button.html?"
         size "size=l"
         domain "&url=http://typeletter.co/"
-        text "&text=Learn to type fast with Type Letter 💯➕💯"
+        text "&text=Learn to type fast with Type Letter ⌨💯"
         src (reduce str [base size domain text])]
     (fn []
       [:iframe {:src src
