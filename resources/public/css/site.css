@@ -41,8 +41,8 @@ body {
   margin-right: 25px;
 }
 
-.instructions-and-link,
-.instructions-and-link a {
+.primary-info,
+.primary-info a {
   font-family: cousine;
   color: #F8E71C;
 }
@@ -58,7 +58,7 @@ body {
   animation: glow 0.5s infinite alternate;
 }
 
-.giant-letter.ending {
+.giant-letter.ended {
   animation: buzz 0.5s;
 }
 
@@ -84,6 +84,14 @@ body {
 
 .fheight {
   height: 100%;
+}
+
+.white {
+  color: #fff;
+}
+
+.small {
+  font-size: 14px;
 }
 
 .blink {

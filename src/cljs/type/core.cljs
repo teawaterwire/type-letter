@@ -5,71 +5,72 @@
             [cljs.core.async :as async
              :refer [>! <! put! chan timeout poll!]]
             [goog.events :as events]
-            [secretary.core :as secretary :include-macros true])
+            [secretary.core :as secretary :include-macros true]
+            [type.dumb-views :refer [footer]])
   (:import [goog.events EventType]))
 
-;; -------------------------
-;; App state
-
-(defonce app (atom {:status nil :score 0}))
-
-(defonce first-interval 2000)
-(defonce speed-inc -20)
-(defn start! []
-  (swap! app assoc :score 0)
-  (swap! app assoc :status :started))
-(defn pre-end! [] (swap! app assoc :status :ending))
-(defn end! []
-  (swap! app assoc :status :ended)
-  (swap! app assoc :timestamp nil))
-(defn next-level! [] (swap! app update :score inc))
-(defn set-letter-wanted! [l]
-  (swap! app assoc :letter-wanted l)
-  (swap! app assoc :timestamp (.getTime (js/Date.))))
-(defn get-interval []
-  (-> (:score @app) (* speed-inc) (+ first-interval)))
 
 ;; -------------------------
-;; Create letter generator
+;; App states, constants and update functions
 
+(defonce status (atom nil)) ; Could be nil, :started or :ended
+(defonce score (atom 0))
+(defonce letter-wanted (atom "?"))
+
+(defonce first-interval 2000) ; First letter gets 2s
+(defonce speed-delta 20) ; Decreased by 20ms at each level
 (defonce alphabet (seq "ABCDEFGHIJKLMNOPQRSTUVWXYZ"))
-; http://onlineslangdictionary.com/lists/most-vulgar-words/
-(defonce words ["CUNT" "SKULLFUCK" "BLUMPKIN" "ASSMUCUS" "MOTHERFUCKER"
-                "CUMDUMP" "FUCKMEAT" "FUCK" "GFY" "FUCKTOY" "SPERG"
-                "COCK" "CUNTBAG" "SWEARGASM" "FUB" "SHUM"])
 
-(defn start-generator [keys-chan]
-  (go
-   (<! keys-chan)
-   (start!)
-   (set-letter-wanted! (rand-nth alphabet))
-   (loop [w ""]
-     (let [t (timeout (get-interval))
-           [letter c] (alts! [t keys-chan])]
-       (when (and (= c keys-chan) (= (:letter-wanted @app) letter))
-         (let [word (if (= w "") (rand-nth (if (:offensive @app) words alphabet)) w)
-               l (first word)]
-           (next-level!)
-           (set-letter-wanted! l)
-           (recur (subs word 1))))
-       (pre-end!)
-       (<! (timeout 1000))
-       (poll! keys-chan)
-       (end!)
-       (start-generator keys-chan)))))
+(defn start! [] (reset! status :started) (reset! score 0))
+(defn end! [] (reset! status :ended))
+(defn next-level! [] (swap! score inc))
+(defn set-letter-wanted! [l] (reset! letter-wanted l))
+(defn get-interval [] (-> @score (* -1 speed-delta) (+ first-interval)))
+
 
 ;; -------------------------
-;; Define utilities listening to global events and feeding channels
+;; Views
 
-(defn events->chan
-  "Given a target DOM element and event type return a channel of
-  observed events. Can supply the channel to receive events as third
-  optional argument."
-  ([el event-type] (events->chan el event-type (chan)))
-  ([el event-type c]
-   (events/listen el event-type
-                  (fn [e] (put! c e)))
-   c))
+(defn timer-bar []
+  (let [previous-score (atom 0)
+        time-left (atom (get-interval))]
+    ;; I'm not sure this is the best way to "decrement" time...
+    (js/setInterval #(swap! time-left (fn [t] (- t speed-delta))) speed-delta)
+    (fn []
+      (when (#{:ended} @status) (reset! time-left 0))
+      (let [interval (get-interval)
+            tx (-> @time-left (* 100) (/ interval) (str "%"))]
+        (when (> @score @previous-score)
+          (reset! previous-score @score) (reset! time-left interval))
+        [:div#t.loader-bck {:style {:position "absolute"
+                                    :height "100%"
+                                    :width "100%"
+                                    :transform (str "translateX(" tx ")")}}]))))
+
+(defn home-page []
+  [:div.fheight
+   (when (#{:started} @status)
+     [timer-bar])
+   [:div.container
+    [:span.logo.left "TYPE LETTER"]
+    [:span.primary-info.left
+     "type the letters as they appear"]
+    [:span.press-start.right "SCORE: " @score]
+    [:div.giant-letter {:class @status} @letter-wanted]
+    [:div.press-start.blink
+     (case @status
+       nil "PRESS ANY KEY TO START"
+       :ended "GAME OVER... PRESS ANY KEY TO TRY AGAIN"
+       "")]
+    [footer]]])
+
+
+;; -------------------------
+;; Put keyDown events into channel (from David Nolen)
+
+(defn events->chan [el event-type c]
+  (events/listen el event-type (fn [e] (put! c e)))
+  c)
 
 (defn createKeysChan []
   (events->chan
@@ -77,73 +78,28 @@
    EventType.KEYDOWN
    (chan 1 (map #(-> % .-keyCode js/String.fromCharCode)))))
 
+
 ;; -------------------------
-;; Views
+;; Create letter generator
 
-(defn toggle-mode []
-  [:input {:type "checkbox"
-           :default-checked (:offensive @app)
-           :on-change #(swap! app assoc :offensive (-> % .-target .-value))} "Offensive mode (you've been warned!)"])
+(defn start-generator [keys-chan]
+ (go
+  (<! keys-chan) ; Waiting for first letter to start
+  (start!) ; Update status to :started
+  (set-letter-wanted! (rand-nth alphabet))
+  (loop []
+    (let [t (timeout (get-interval))
+          [letter c] (alts! [t keys-chan])] ; Just loving the alts!
+      (when (and (= c keys-chan) (= @letter-wanted letter))
+        (let [l (rand-nth alphabet)]
+          (next-level!)
+          (set-letter-wanted! l)
+          (recur)))
+      (end!) ; Update status to :ended
+      (<! (timeout 1000)) ; Wait for one second and
+      (poll! keys-chan) ; Clean channel and start again
+      (start-generator keys-chan)))))
 
-(defn twitter-button []
-  (let [base "https://platform.twitter.com/widgets/tweet_button.html?"
-        size "size=l"
-        domain "&url=http://typeletter.co/"
-        text "&text=Learn to type fast with Type Letter ⌨💯"
-        src (reduce str [base size domain text])]
-    (fn []
-      [:iframe {:src src
-                :scrolling "no"
-                :width 80
-                :height 30
-                :style {:border 0}}])))
-
-(defn timer-bar [timestamp]
-  (let [speed 20
-        timestamp (atom timestamp)
-        time-left (atom (get-interval))]
-    (js/setInterval #(swap! time-left (fn [t] (- t speed))) speed)
-    (fn [stamp status interval]
-      (when (> stamp @timestamp)
-        (reset! time-left interval)
-        (reset! timestamp stamp))
-      (when (#{:ending :ended} status) (reset! time-left 0))
-      (let [tx (-> @time-left (* 100) (/ interval) (str "%"))]
-        [:div.loader-bck {:style {:position "absolute"
-                                  :height "100%"
-                                  :width "100%"
-                                  :transform (str "translateX(" tx ")")}}]))))
-
-(defn home-page []
-  [:div.fheight
-   (when (:status @app)
-     [timer-bar
-      (:timestamp @app)
-      (:status @app)
-      (get-interval)])
-   [:div.container
-    [:span.logo.left "TYPE LETTER"]
-    [:span.instructions-and-link.left
-     "type the letters as they appear"]
-    [:span.press-start.right "SCORE: " (:score @app)]
-    [:div.giant-letter {:class-name (:status @app)} (get @app :letter-wanted "?")]
-    [:div.press-start.blink
-     (case (:status @app)
-       nil "PRESS ANY KEY TO START"
-       :ended "GAME OVER... PRESS ANY KEY TO TRY AGAIN"
-       "")]
-    [:div.footer
-     [:span.social-btn.left [twitter-button]]
-     [:span.instructions-and-link.right {:style {:font-size "14px"
-                                                 :position "relative"
-                                                 :top "6px"}}
-      [:span {:style {:color "#fff"}} "Made by "]
-      [:a {:target "_blank"
-           :href "https://twitter.com/teawaterwire"} "@teawaterwire"]
-      [:span {:style {:color "#fff"}} " & Designed by "]
-      [:a {:target "_blank"
-           :href "https://twitter.com/guillaumechabot"} "@guillaumechabot"]]]]
-   ])
 
 ;; -------------------------
 ;; Initialize app
