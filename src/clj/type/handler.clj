@@ -3,7 +3,9 @@
             [compojure.route :refer [not-found resources]]
             [hiccup.page :refer [include-js include-css html5]]
             [type.middleware :refer [wrap-middleware]]
-            [config.core :refer [env]]))
+            [config.core :refer [env]]
+            [clojure.java.io :as io]
+            [pl.danieljanus.tagsoup :as ts]))
 
 (def mount-target
   [:div#app.fheight
@@ -25,6 +27,7 @@
     (include-css (if (env :dev) "/css/site.css" "/css/site.min.css"))]
     [:body
      mount-target
+     (ts/parse-string (slurp (io/resource "public/html/ribbon.html")))
      (include-js "/js/app.js")
      (include-js "/js/analytics.js")]))
 

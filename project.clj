@@ -19,6 +19,7 @@
                  [org.clojure/clojurescript "1.8.40"
                   :scope "provided"]
                  [secretary "1.2.3"]
+                 [clj-tagsoup/clj-tagsoup "0.3.0"]
                  [venantius/accountant "0.1.7"
                   :exclusions [org.clojure/tools.reader]]]
 
