@@ -19,12 +19,14 @@
 
 (defonce first-interval 2000) ; First letter gets 2s
 (defonce speed-delta 20) ; Decreased by 20ms at each level
-(defonce alphabet (seq "ABCDEFGHIJKLMNOPQRSTUVWXYZ"))
+(defonce alphabet (seq "ABCDEFGHIJKLMNOPQRSTUVWXYZ")) ; Ya know
 
-(defn start! [] (reset! status :started) (reset! score 0))
+(defn set-letter-wanted!
+  ([] (set-letter-wanted! (rand-nth alphabet)))
+  ([l] (reset! letter-wanted l)))
+(defn start! [] (reset! status :started) (reset! score 0) (set-letter-wanted!))
 (defn end! [] (reset! status :ended))
-(defn next-level! [] (swap! score inc))
-(defn set-letter-wanted! [l] (reset! letter-wanted l))
+(defn next-level! [] (swap! score inc) (set-letter-wanted!))
 (defn get-interval [] (-> @score (* -1 speed-delta) (+ first-interval)))
 
 
@@ -86,15 +88,12 @@
  (go
   (<! keys-chan) ; Waiting for first letter to start
   (start!) ; Update status to :started
-  (set-letter-wanted! (rand-nth alphabet))
   (loop []
     (let [t (timeout (get-interval))
           [letter c] (alts! [t keys-chan])] ; Just loving the alts!
       (when (and (= c keys-chan) (= @letter-wanted letter))
-        (let [l (rand-nth alphabet)]
-          (next-level!)
-          (set-letter-wanted! l)
-          (recur)))
+        (next-level!)
+        (recur))
       (end!) ; Update status to :ended
       (<! (timeout 1000)) ; Wait for one second and
       (poll! keys-chan) ; Clean channel and start again
