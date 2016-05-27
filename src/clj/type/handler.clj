@@ -31,7 +31,7 @@
      mount-target
      (ts/parse-string (slurp (io/resource "public/html/ribbon.html")))
      (include-js "/js/app.js")
-     (include-js "/js/analytics.js")]))
+     (include-js "/analytics.js")]))
 
 
 (defroutes routes
