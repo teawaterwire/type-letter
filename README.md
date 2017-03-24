@@ -1,5 +1,5 @@
 # Type Letter
-_http://typeletter.co/_ ⌨💯
+_https://teawaterwire.github.io/type-letter/_ ⌨💯
 
 I just wanted to make a silly mini game with [Reagent](https://reagent-project.github.io/)
 to give [core.async](https://github.com/clojure/core.async/) a try. :bowtie:
